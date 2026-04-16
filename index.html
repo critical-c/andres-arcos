@@ -375,12 +375,14 @@ tbody td{padding:10px 13px;vertical-align:middle}
   <div class="tableWrap">
     <table>
       <thead>
-        <tr>
-          <th onclick="sortBy('Nombre')">#</th>
+          <tr>
+          <th>#</th>
+          <th onclick="sortBy('ProgramaAcademico')">Programa Académico ↕</th>
+          <th onclick="sortBy('PlanAcademico')">Plan Académico ↕</th>
+          <th onclick="sortBy('ID')">ID Estudiante ↕</th>
           <th onclick="sortBy('Nombre')">Nombre ↕</th>
-          <th>ID</th>
-          <th onclick="sortBy('Programa')">Programa ↕</th>
-          <th onclick="sortBy('Semestre')">Semestre ↕</th>
+          <th onclick="sortBy('PeriodoIngreso')">Período de Ingreso ↕</th>
+          <th onclick="sortBy('UltimaUbicacionSemestral')">Última Ubicación Semestral ↕</th>
           <th>Correo</th>
           <th>Teléfonos</th>
           <th>Celular</th>
@@ -620,12 +622,14 @@ async function login(){
     // Normalizar las columnas
     allData = raw.map(row => ({
       profesor: row.profesor,
-      ID: getCell(row, 'ID ESTUDIANTE', 'ID', 'id'),
+      ID: String(getCell(row, 'ID ESTUDIANTE', 'ID', 'id') || ''),
       Nombre: getCell(row, 'NOMBRE', 'Nombre', 'nombre'),
       ProgramaAcademico: getCell(row, 'PROGRAMA ACADÉMICO', 'PROGRAMA', 'Programa', 'programa') || '',
       PlanAcademico: getCell(row, 'PLAN ACADÉMICO', 'PLAN', 'Plan', 'plan') || '',
       PeriodoIngreso: getCell(row, 'PERÍODO DE INGRESO', 'PERIODO DE INGRESO', 'Periodo de Ingreso', 'periodoingreso') || '',
       UltimaUbicacionSemestral: getCell(row, 'ULTIMA UBICACIÓN SEMESTRAL', 'ULTIMA UBICACION SEMESTRAL', 'Ultima Ubicacion Semestral', 'ultimaucacionsem', 'Semestre') || '',
+      Programa: getCell(row, 'PROGRAMA ACADÉMICO', 'PROGRAMA', 'Programa', 'programa') || '',
+      Semestre: getCell(row, 'ULTIMA UBICACIÓN SEMESTRAL', 'ULTIMA UBICACION SEMESTRAL', 'Ultima Ubicacion Semestral', 'ultimaucacionsem', 'Semestre') || '',
       Correo: getCell(row, 'CORREO', 'Correo', 'correo') || '',
       Telefonos: getCell(row, 'TELÉFONOS', 'TELEFONOS', 'Telefonos', 'telefonos') || '',
       Celular: getCell(row, 'CELULAR', 'Celular') || ''
@@ -681,7 +685,7 @@ function sortBy(col){if(sortCol===col) sortDir*=-1; else{sortCol=col;sortDir=1}f
 // ── Render tabla ──────────────────────────────────────────────
 function render(data){
   const tb=$('tbody');
-  if(!data.length){tb.innerHTML='<tr><td colspan="9" class="empty">Sin estudiantes con esos filtros</td></tr>';return}
+  if(!data.length){tb.innerHTML='<tr><td colspan="11" class="empty">Sin estudiantes con esos filtros</td></tr>';return}
   tb.innerHTML=data.map((e,i)=>{
     const atend=isAtendido(e.ID);
     return`<tr style="${atend?'background:#F0FDF4':''}" onclick="abrirModal('${e.ID}')">
@@ -695,7 +699,7 @@ function render(data){
       <td class="be">${e.Correo||'—'}</td>
       <td class="bph">${e.Telefonos||'—'}</td>
       <td class="bph">${e.Celular||'—'}</td>
-      <td><button class="btnReg" onclick="event.stopPropagation();abrirModal('${e.ID}')">${atend?'Ver/Editar':'Registrar'}</button></td>
+      <td><button class="btnReg" onclick="abrirModal('${e.ID}')">${atend?'Ver/Editar':'Registrar'}</button></td>
      </tr>`;
   }).join('');
 }
@@ -905,12 +909,17 @@ function exportToExcel(){
   ]),'Estadísticas');
   
   // Hoja de Todos los Estudiantes
-  const allStudentsData=[['Programa','ID','Nombre','Semestre','Profesor','Correo','Teléfonos','Celular','Atendido']];
+  const allStudentsData=[['Programa Académico','Plan Académico','ID Estudiante','Nombre','Período de ingreso','Última ubicación semestral','Correo','Teléfonos','Celular']];
   allData.forEach(e=>{
     allStudentsData.push([
-      e.Programa,e.ID,e.Nombre,e.Semestre,e.profesor,
-      e.Correo||'—',e.Telefonos||'—',e.Celular||'—',
-      isAtendido(e.ID)?'SI':'NO'
+      e.ProgramaAcademico||e.Programa||'',
+      e.PlanAcademico||'',
+      e.ID,e.Nombre,
+      e.PeriodoIngreso||'',
+      e.UltimaUbicacionSemestral||'',
+      e.Correo||'—',
+      e.Telefonos||'—',
+      e.Celular||'—'
     ]);
   });
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(allStudentsData),'Todos los Estudiantes');
@@ -926,23 +935,50 @@ function exportToExcel(){
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(registrosData),'Registros Deserción');
   
   // Hoja por Programa (Administración)
-  const admData=[['ID','Nombre','Semestre','Profesor','Correo','Teléfonos','Celular','Atendido']];
+  const admData=[['Programa Académico','Plan Académico','ID Estudiante','Nombre','Período de ingreso','Última ubicación semestral','Correo','Teléfonos','Celular']];
   allData.filter(e=>normProg(e.Programa)==='ADM').forEach(e=>{
-    admData.push([e.ID,e.Nombre,e.Semestre,e.profesor,e.Correo||'—',e.Telefonos||'—',e.Celular||'—',isAtendido(e.ID)?'SI':'NO']);
+    admData.push([
+      e.ProgramaAcademico||e.Programa||'',
+      e.PlanAcademico||'',
+      e.ID,e.Nombre,
+      e.PeriodoIngreso||'',
+      e.UltimaUbicacionSemestral||'',
+      e.Correo||'—',
+      e.Telefonos||'—',
+      e.Celular||'—'
+    ]);
   });
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(admData),'Administración');
   
   // Hoja por Programa (Contaduría)
-  const conData=[['ID','Nombre','Semestre','Profesor','Correo','Teléfonos','Celular','Atendido']];
+  const conData=[['Programa Académico','Plan Académico','ID Estudiante','Nombre','Período de ingreso','Última ubicación semestral','Correo','Teléfonos','Celular']];
   allData.filter(e=>normProg(e.Programa)==='CON').forEach(e=>{
-    conData.push([e.ID,e.Nombre,e.Semestre,e.profesor,e.Correo||'—',e.Telefonos||'—',e.Celular||'—',isAtendido(e.ID)?'SI':'NO']);
+    conData.push([
+      e.ProgramaAcademico||e.Programa||'',
+      e.PlanAcademico||'',
+      e.ID,e.Nombre,
+      e.PeriodoIngreso||'',
+      e.UltimaUbicacionSemestral||'',
+      e.Correo||'—',
+      e.Telefonos||'—',
+      e.Celular||'—'
+    ]);
   });
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(conData),'Contaduría');
   
   // Hoja por Programa (Negocios Internacionales)
-  const negData=[['ID','Nombre','Semestre','Profesor','Correo','Teléfonos','Celular','Atendido']];
+  const negData=[['Programa Académico','Plan Académico','ID Estudiante','Nombre','Período de ingreso','Última ubicación semestral','Correo','Teléfonos','Celular']];
   allData.filter(e=>normProg(e.Programa)==='NEG').forEach(e=>{
-    negData.push([e.ID,e.Nombre,e.Semestre,e.profesor,e.Correo||'—',e.Telefonos||'—',e.Celular||'—',isAtendido(e.ID)?'SI':'NO']);
+    negData.push([
+      e.ProgramaAcademico||e.Programa||'',
+      e.PlanAcademico||'',
+      e.ID,e.Nombre,
+      e.PeriodoIngreso||'',
+      e.UltimaUbicacionSemestral||'',
+      e.Correo||'—',
+      e.Telefonos||'—',
+      e.Celular||'—'
+    ]);
   });
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(negData),'Negocios Internacionales');
   
