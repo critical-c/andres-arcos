@@ -852,11 +852,11 @@ function showReport(){
       
       <h4 style="font-size:13px;color:var(--green);margin-bottom:8px">✓ Atendidos (${atendidosProg.length})</h4>
       <table class="reportTable" style="margin-bottom:16px">
-        <thead><tr><th>#</th><th>Nombre</th><th>ID</th><th>Semestre</th><th>Profesor</th><th>Tipo</th><th>Estado</th><th>Fecha</th></tr></thead>
+        <thead><tr><th>#</th><th>Nombre</th><th>ID</th><th>Semestre</th><th>Profesor</th><th>Tipo</th><th>Estado</th><th>Fecha</th><th>Acción</th></tr></thead>
         <tbody>${atendidosProg.map((e,i)=>{
           const r=registros.find(x=>x.id===String(e.ID));
-          return`<tr class="atendido"><td>${i+1}</td><td>${e.Nombre}</td><td>${e.ID}</td><td>${e.Semestre}</td><td>${e.profesor}</td><td>${r?r.tipo:'—'}</td><td>${r?r.estadoContacto:'—'}</td><td>${r?r.fecha:'—'}</td></tr>`;
-        }).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--gray)">Sin registros</td></tr>'}</tbody>
+          return`<tr class="atendido"><td>${i+1}</td><td>${e.Nombre}</td><td>${e.ID}</td><td>${e.Semestre}</td><td>${e.profesor}</td><td>${r?r.tipo:'—'}</td><td>${r?r.estadoContacto:'—'}</td><td>${r?r.fecha:'—'}</td><td><button class="btnBar red" onclick="eliminarRegistro('${e.ID}')">Eliminar</button></td></tr>`;
+        }).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--gray)">Sin registros</td></tr>'}</tbody>
        </table>
       
       <h4 style="font-size:13px;color:var(--accent);margin-bottom:8px">⌛ Pendientes (${pendientesProg.length})</h4>
@@ -885,6 +885,16 @@ function showReport(){
 }
 
 function hideReport(){$('reportScreen').style.display='none';$('app').style.display='flex'}
+
+function eliminarRegistro(id){
+  if(!confirm('¿Eliminar este registro de seguimiento?')) return;
+  registros = registros.filter(r=>r.id!==String(id));
+  saveRegistros(registros);
+  T('Registro eliminado','ok');
+  updateStats();
+  if($('reportScreen').style.display==='block') showReport();
+  else filtrar();
+}
 
 // ── Exportar a Excel (todos los datos) ───────────────────────
 function exportToExcel(){
